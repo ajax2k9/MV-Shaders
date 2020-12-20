@@ -1,0 +1,81 @@
+// xs_begin
+// author : 'Alex M'
+// arg : {id = '0' name = 'string' value = '234'   range = '0 255'    step = '1'    decimal = '0' }
+// arg : {id = '1' name = 'light 1' value = '216'   range = '0 255'    step = '1'    decimal = '0' }
+// arg : {id = '2' name = 'light 2' value = '211'   range = '0 255'    step = '1'    decimal = '0' }
+// arg : {id = '3' name = 'light 3' value = '192'   range = '0 255'    step = '1'    decimal = '0' }
+// arg : {id = '4' name = 'light 4' value = '1'   range = '0 255'    step = '1'    decimal = '0' }
+// xs_end
+
+//===== user args =====
+// uniform float	i_args[8];
+
+//===== built-in args =====
+// uniform vec3		i_volume_size;	// volume size [1-256]
+// uniform float	i_color_index;	// color index [0-255]
+// uniform vec3		i_mirror;		// mirror mode [0,1]
+// uniform vec3		i_axis;			// axis mode [0,1]
+// uniform float	i_iter;			// iteration index
+
+//===== built-in functions ===== 
+// float voxel( vec3 v );			// get voxel color index at position v
+
+
+float random (vec2 st) {
+    return fract(sin(dot(st.xy,
+                         vec2(12.9898,78.233)))*
+        43758.5453123);
+}
+
+float map( vec3 v ) {				// generate a new voxel color index at position v ( v is at the center of voxel, such as vec3( 1.5, 2.5, 4.5 ) )
+   
+    float width =i_volume_size.y;
+
+    float height = i_volume_size.z;
+    float _scale  = pow(width,2) * 0.25 / height;
+    float _y = mod(v.y,width) - width / 2;
+
+    vec3 f = floor(v);
+
+    float r = floor(pow(_y,2) / _scale) + 1;
+    float r_1 = floor(pow(_y-1,2)/ _scale) + 1;
+
+   if(v.x < 2){
+
+       if(floor(_y) > 0 ){
+
+         if(f.z <= r && f.z >= r_1) return i_args[0];
+  
+       } else if(floor(_y) < 0) {
+           if(f.z <= r_1 && f.z >= r) return i_args[0];
+       } else {
+           if (f.z == r) return i_args[0];
+       }
+   }
+
+   if(mod(floor(_y),3) == 0 && v.x < 1.0){
+
+       r-=1;
+       r_1-=1;
+
+        float _rand = random(vec2(v.y ,v.z));
+        int _index = int(_rand * 4 + 1);
+       float color = i_args[_index];
+
+     //  float color = 1.0;
+
+       if(floor(_y) > 0 ){
+
+         if(f.z <= r && f.z >= r_1) return color;
+  
+       } else if(floor(_y) < 0) {
+           if(f.z <= r_1 && f.z >= r) return color;
+       } else {
+           if (f.z == r) return color;
+       }
+
+   }
+
+  return 0.0; 
+
+}

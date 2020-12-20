@@ -1,0 +1,75 @@
+// xs_begin
+// author : 'Alex M'
+// xs_end
+
+//===== user args =====
+// uniform float	i_args[8];
+
+//===== built-in args =====
+// uniform vec3		i_volume_size;	// volume size [1-256]
+// uniform float	i_color_index;	// color index [0-255]
+// uniform vec3		i_mirror;		// mirror mode [0,1]
+// uniform vec3		i_axis;			// axis mode [0,1]
+// uniform float	i_iter;			// iteration index
+
+//===== built-in functions ===== 
+// float voxel( vec3 v );			// get voxel color index at position v
+
+
+
+bool cuboid(vec3 v, vec3 start , vec3 end){
+	bool result = true;
+	result = result && (v.x >= start.x && v.x <= end.x);
+	result = result && (v.y >= start.y && v.y <= end.y);
+	result = result && (v.z >= start.z && v.z <= end.z);
+	
+	return result;
+	
+}
+
+float map( vec3 v ) {				// generate a new voxel color index at position v ( v is at the center of voxel, such as vec3( 1.5, 2.5, 4.5 ) )
+	bool band;
+
+	vec3 end = i_volume_size - vec3(2.0,2.0,0.0);
+	end.z =6.0;
+	band = cuboid(v,vec3(2.0,2.0,5.0),end);
+
+    end.z =2.0;
+	band = band || cuboid(v,vec3(2.0,2.0,1.0),end);
+	end = i_volume_size - vec3(3.0,3.0,0.0);
+	end.z =9.0;
+	band = band && !cuboid(v,vec3(3.0,3.0,0.0),end);
+
+	bool posts = true;
+	end = i_volume_size - vec3(1.0,1.0,0.0);
+	end.z =8.0;
+	posts = posts && cuboid(v,vec3(1.0,1.0,0.0),end);
+
+	posts = posts && !(mod(floor(v.x),4) == 3 || mod(floor(v.y),4) == 3);
+  
+
+	if(floor(v.x) == 1 || floor(v.x) == i_volume_size.x - 2 ){
+       posts = posts && !(v.z > 7.0 && mod(floor(v.y),2) == 0);
+	}
+
+	if(floor(v.y) == 1 || floor(v.y) == i_volume_size.y - 2 ){
+       posts = posts && !(v.z > 7.0 && mod(floor(v.x),2) == 0);
+	}
+
+	end = i_volume_size - vec3(2.0,2.0,0.0);
+	end.z =9.0;
+
+	posts = posts && !cuboid(v,vec3(2.0,2.0,0.0),end);
+   
+
+
+	if(band){
+		return i_color_index;
+	} 
+	
+	if(posts){
+		return i_color_index + 1.0;
+	}
+	return 0.0;
+		
+}
